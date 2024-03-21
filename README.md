@@ -1,98 +1,51 @@
 <img src="https://avatars2.githubusercontent.com/u/2810941?v=3&s=96" alt="Google Cloud Platform logo" title="Google Cloud Platform" align="right" height="96" width="96"/>
 
-# Cloud Functions Hello World with Cloud Code
+# Gemini 1.0 Pro Vision in BigQuery: Remote Function Implementation
+Here we will create a function in BigQuery based on the Java Cloud Function that implements Gemini 1.0 Pro Vision foundation model. First we’ll create and deploy the Java Cloud Function to compare images using the Gemini 1.0 Pro Vision model and then will create the remote function in BigQuery that invokes the deployed Cloud Function. Remember, the same procedure can be followed for any remote function execution in BigQuery.
 
-"Java: Hello World" is a simple HTTP-triggered Cloud Functions application that contains a sample Java-based script that outputs a sample "Hello World" string.
+## Create the Java Cloud Function
+We will build a Gen 2 Cloud Function in Java for validating test images against a baseline image stored in a dataset containing test image screenshots in an external table in BigQuery using the Gemini Pro Vision model (Java SDK) and deploy it to a REST endpoint.
 
-## Table of Contents
+## Java Cloud Function
+Open Cloud Shell Terminal and navigate to the root directory or your default workspace path.
+Click the Cloud Code Sign In icon from the bottom left corner of the status bar and select the active Google Cloud Project that you want to create the Cloud Functions in.
+Click the same icon again and this time select the option to create a new application.
+In the Create New Application pop-up, select Cloud Functions application:
 
-* [Directory contents](#directory-contents)
-* [Getting started with VS Code](#getting-started-with-vs-code)
-* [Sign up for user research](#sign-up-for-user-research)
+## Create New Application pop up in Cloud Shell Editor
+5. Select Java: Hello World option from the next pop-up:
 
-## Directory contents
-* `launch.json` - the required Cloud Code configurations
-* `HelloWorld.java` - the Java "Hello World" sample’s code
 
-## Getting started with VS Code
+## Create New Application pop up page 2
+6. Provide a name for the project in the project path. In this case, “Gemini-BQ-Function”.
 
-### Before you begin
+7. You should see the project structure opened up in a new Cloud Shell Editor view:
 
-1. If you're new to Google Cloud, [create an account](https://console.cloud.google.com/freetrial/signup/tos) to evaluate how our products perform in real-world scenarios. New customers also get $300 in free credits to run, test, and deploy workloads.
 
-1. If you're testing this out to learn about the feature, [create a new project](https://pantheon.corp.google.com/projectselector2/home/dashboard) so that you can delete the project and all associated resources when you're finished.
+## New Java Cloud Function application project structure
+8. Now go ahead and add the necessary dependencies within the <dependencies>… </dependencies> tag in the pom.xml file or replace your pom.xml with the below:
+https://github.com/AbiramiSukumaran/Gemini-BQ-Function/blob/main/pom.xml
+     
+9. Change the name of your class from “HelloWorld.java” to something more meaningful. Let’s say “GeminiBigQueryFunction.java”. You will have to rename the class accordingly.
 
-   You can also use this template as a starting point to create a new function in a new or existing project.
+10. Copy the code below and replace the placeholder code in the file GeminiBigQueryFunction.Java:
+    https://github.com/AbiramiSukumaran/Gemini-BQ-Function/blob/main/src/main/java/cloudcode/helloworld/GeminiBigQueryFunction.java
 
-1. Make sure that billing is enabled for your Cloud project. Learn how to [check if billing is enabled on a project](https://cloud.google.com/billing/docs/how-to/verify-billing-enabled).
+11. Now go to Cloud Shell terminal and execute the below statement build and deploy the Cloud Function:
 
-1. [Enable the following APIs](https://pantheon.corp.google.com/projectselector2/apis/enableflow?apiid=cloudfunctions,cloudbuild.googleapis.com,artifactregistry.googleapis.com,run.googleapis.com,logging.googleapis.com,pubsub.googleapis.com&redirect=https:%2F%2Fcloud.google.com%2Ffunctions%2Fdocs%2Fcreate-deploy-nodejs):
+gcloud functions deploy gemini-bq-fn --runtime java17 --trigger-http --entry-point cloudcode.helloworld.GeminiBigQueryFunction --allow-unauthenticated
+The result for this would be a REST URL in the format as below :
 
-    * Cloud Functions
-    * Cloud Build
-    * Artifact Registry
-    * Cloud Run
-    * Logging
-    * Pub/Sub
-    
-1. Install [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git). Git is required for copying samples to your machine.
+https://us-central1-YOUR_PROJECT_ID.cloudfunctions.net/gemini-bq-fn
 
-1. Install the [Cloud Code plugin](https://cloud.google.com/code/docs/vscode/install#installing) if you haven't already.
+12. Test this Cloud Function by running the following command from the terminal:
 
-1. Since Cloud Functions integration is currently a pre-release feature, you'll also need to [install the pre-release build](https://cloud.google.com/code/docs/vscode/insiders#get).
+gcloud functions call gemini-bq-fn --region=us-central1 --gen2 --data '{"calls":[["https://storage.googleapis.com/img_public_test/image_validator/baseline/1.JPG", "https://storage.googleapis.com/img_public_test/image_validator/test/2.JPG", "PROMPT_ABOUT_THE_IMAGES_TO_GEMINI"]]}'
+Response for a random sample prompt:
+![image](https://github.com/AbiramiSukumaran/Gemini-BQ-Function/assets/13735898/c4a48305-fd9e-4751-81e8-fdcf37500ace)
 
-#### Create a function
+JSON Response string from the Cloud Function
 
-To create a new function using this sample, follow these steps:
+Now that the generic Cloud Function for Gemini Pro Vision model implementation is ready, you use this endpoint directly on BigQuery data from within a BigQuery remote function.
 
-1. Click ![Cloud Code icon](https://cloud.google.com/static/code/docs/vscode/images/cloudcode-icon.png) **Cloud Code** and then expand the **Cloud Functions** section.
-
-1. Click **+ Create function** and select the **Java: Hello World** template.
-
-1. Navigate to the pathway that you'd like to create your new function in, enter a name for the function, and select **Create New Application**.
-
-1. If the folder of your application doesn't appear automatically in the **Explorer**, click ![VS Code Refresh icon](https://cloud.google.com/static/code/docs/vscode/images/refresh-icon.png) **Refresh**.
-
-#### Deploy a function
-
-To deploy a function, follow these steps:
-
-1. Right-click a function and select **Deploy function**.
-
-1. In the Quickpick menu, select a GCP project to deploy your function to.
-
-1. Select a region that the function will be deployed to.
-
-1. Select a runtime.
-
-The function's deployment may take a few minutes.
-
-If the deployment fails, refer to the **Output** tab for the error message. Clicking the link takes you to the build logs in Google Cloud console and provides more detail about the error.
-
-#### Clean up
-
-To delete only the function you created for this quickstart:
-
-1. In the Cloud Functions explorer, right-click the function name and then select **Open in Cloud Console**.
-
-1. Click **Delete** and then click **Delete**.
-
-To delete your project and the project's associated resources:
-
-1. Go to the [Projects page](https://pantheon.corp.google.com/cloud-resource-manager) in the Google Cloud console.
-
-1. Select the project that you created for this quickstart and then click **Delete**.
-
-1. Type the project ID to confirm and then click **Shut down**.
-
-   This shuts down the project and schedules it for deletion.
-
-### Sign up for user research
-
-We want to hear your feedback!
-
-The Cloud Code team is inviting our user community to sign-up to participate in Google User Experience Research. 
-
-If you’re invited to join a study, you may try out a new product or tell us what you think about the products you use every day. At this time, Google is only sending invitations for upcoming remote studies. Once a study is complete, you’ll receive a token of thanks for your participation such as a gift card or some Google swag. 
-
-[Sign up using this link](https://google.qualtrics.com/jfe/form/SV_4Me7SiMewdvVYhL?reserved=1&utm_source=In-product&Q_Language=en&utm_medium=own_prd&utm_campaign=Q1&productTag=clou&campaignDate=January2021&referral_code=UXbT481079) and answer a few questions about yourself, as this will help our research team match you to studies that are a great fit.
+Read more about it in this blog: [https://medium.com/@abidsukumaran/in-place-llm-insights-bigquery-gemini-for-structured-unstructured-data-analytics-fdfac0421626](url)
